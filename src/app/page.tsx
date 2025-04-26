@@ -36,7 +36,6 @@ type Event = {
   isFinalApproved: boolean;
   approvals: number;
 };
-
 export default function HomePage() {
   const { address, connect } = useWallet();
   const role = useRole(address);
@@ -46,11 +45,11 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchEvents() {
       try {
-        const contract = await getContract();
-        const count = await contract.eventCount();
+        const [approvalContract, budgetContract] = await getContract();
+        const count = await approvalContract.eventCount();
         const results: Event[] = [];
         for (let i = 0; i < count; i++) {
-          const result = await contract.fetchEvent(i);
+          const result = await approvalContract.fetchEvent(i);
           const clubName = result[0];
           const title = result[1];
           const description = result[2];
@@ -248,7 +247,7 @@ export default function HomePage() {
                           </p>
                           <div className="flex items-center">
                             <div className="flex space-x-1">
-                              {[...Array(3)].map((_, i) => (
+                              {[...Array(4)].map((_, i) => (
                                 <div
                                   key={i}
                                   className={`h-2 w-6 rounded-sm ${
@@ -260,7 +259,7 @@ export default function HomePage() {
                               ))}
                             </div>
                             <span className="ml-2 flex flex-wrap gap-2 text-xs text-gray-700">
-                              {["Mentor", "Dean", "Honourable VC"].map(
+                              {["Mentor", "HOD", "Dean", "Honourable VC"].map(
                                 (role, idx) => (
                                   <span
                                     key={role}
@@ -281,9 +280,12 @@ export default function HomePage() {
                       </div>
                     </div>
                   </CardContent>
-                  {(role === "Mentor" || role === "Dean" || role === "VC") &&
+                  {(role === "Mentor" ||
+                    role === "HOD" ||
+                    role === "Dean" ||
+                    role === "VC") &&
                     !event.isFinalApproved &&
-                    event.approvals < 3 && (
+                    event.approvals < 4 && (
                       <CardFooter className="bg-gray-50 border-t">
                         <Link href={`/approve/${event.id}`} className="w-full">
                           <Button

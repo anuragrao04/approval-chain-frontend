@@ -31,6 +31,13 @@ import {
 import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CreateEventPage() {
   const { address } = useWallet();
@@ -41,8 +48,11 @@ export default function CreateEventPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
+  const [department, setDepartment] = useState("CSE");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const departments = ["CSE", "ECE", "Mechanical"];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,8 +60,15 @@ export default function CreateEventPage() {
     setError("");
 
     try {
-      const contract = await getContract();
-      await contract.createEvent(clubName, title, description, Number(amount));
+      const [approvalContract, budgetContract] = await getContract();
+      const departmentIndex = departments.indexOf(department);
+      await approvalContract.createEvent(
+        clubName,
+        title,
+        description,
+        Number(amount),
+        departmentIndex,
+      );
       router.push("/");
     } catch (err: any) {
       console.error(err);
@@ -175,6 +192,32 @@ export default function CreateEventPage() {
                   className="border-gray-300 focus:border-purple-400 focus:ring-purple-400"
                   required
                 />
+              </div>
+
+              {/* Department dropdown */}
+              <div className="space-y-2">
+                <Label htmlFor="department" className="text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <School className="h-4 w-4 text-gray-500" />
+                    Department
+                  </div>
+                </Label>
+                <Select
+                  value={department}
+                  onValueChange={setDepartment}
+                  className="w-full"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {error && (

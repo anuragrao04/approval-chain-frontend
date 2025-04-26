@@ -2,30 +2,9 @@
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_mentor",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_dean",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "_vc",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "_eventId",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "name": "approveEvent",
@@ -51,15 +30,46 @@
         "type": "string"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "_requestedAmount",
-        "type": "uint256"
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
+        "name": "_department",
+        "type": "uint16"
       }
     ],
     "name": "createEvent",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_mentor",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_hod",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_dean",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_vc",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
   },
   {
     "inputs": [],
@@ -79,9 +89,9 @@
     "name": "eventCount",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -90,17 +100,17 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "name": "events",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "id",
-        "type": "uint256"
+        "type": "uint16"
       },
       {
         "internalType": "string",
@@ -118,14 +128,24 @@
         "type": "string"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
+        "name": "department",
+        "type": "uint16"
+      },
+      {
+        "internalType": "uint16",
         "name": "requestedAmount",
-        "type": "uint256"
+        "type": "uint16"
       },
       {
         "internalType": "address",
         "name": "createdBy",
         "type": "address"
+      },
+      {
+        "internalType": "uint8",
+        "name": "approvalCount",
+        "type": "uint8"
       },
       {
         "internalType": "bool",
@@ -139,9 +159,9 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "_eventId",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "name": "fetchEvent",
@@ -162,9 +182,9 @@
         "type": "string"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint16",
         "name": "",
-        "type": "uint256"
+        "type": "uint16"
       },
       {
         "internalType": "address",
@@ -177,9 +197,14 @@
         "type": "bool"
       },
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "",
-        "type": "uint256"
+        "type": "uint8"
+      },
+      {
+        "internalType": "uint16",
+        "name": "",
+        "type": "uint16"
       }
     ],
     "stateMutability": "view",
@@ -188,34 +213,17 @@
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint8",
         "name": "_eventId",
-        "type": "uint256"
+        "type": "uint8"
       }
     ],
     "name": "getApprovals",
     "outputs": [
       {
-        "components": [
-          {
-            "internalType": "address",
-            "name": "signer",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "role",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "timestamp",
-            "type": "uint256"
-          }
-        ],
-        "internalType": "struct ApprovalChain.Approval[]",
+        "internalType": "uint8",
         "name": "",
-        "type": "tuple[]"
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
@@ -235,6 +243,19 @@
         "internalType": "string",
         "name": "",
         "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "hod",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
       }
     ],
     "stateMutability": "view",

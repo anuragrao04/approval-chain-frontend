@@ -27,8 +27,6 @@ import {
   Loader2,
   School,
   ThumbsUp,
-  AlertTriangle,
-  User,
 } from "lucide-react";
 
 type EventDetails = {
@@ -39,7 +37,7 @@ type EventDetails = {
   createdBy: string;
   isFinalApproved: boolean;
   approvalCount: number;
-  approvals: Array<{ signer: string; role: string; timestamp: number }>;
+  department: number; // department added here
 };
 
 export default function ApproveEventPage() {
@@ -53,13 +51,17 @@ export default function ApproveEventPage() {
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
   const [error, setError] = useState("");
+  const [departmentBalance, setDepartmentBalance] = useState(0);
 
   useEffect(() => {
     async function fetchEventDetails() {
       try {
-        const contract = await getContract();
-        const data = await contract.fetchEvent(Number(id));
-        const approvals = await contract.getApprovals(Number(id));
+        const [approvalContract, budgetContract] = await getContract();
+        console.log("got contracts");
+        const data = await approvalContract.fetchEvent(Number(id));
+        console.log(data);
+        const approvals = await approvalContract.getApprovals(Number(id));
+        console.log(approvals);
 
         const parsed = {
           clubName: data[0],
@@ -69,15 +71,26 @@ export default function ApproveEventPage() {
           createdBy: data[4],
           isFinalApproved: data[5],
           approvalCount: Number(data[6]),
-          approvals,
+          department: data[7], // assuming department is stored at index 7
         };
 
         setEvent(parsed);
-
-        const alreadySigned = approvals.some(
-          (a: any) => a.signer.toLowerCase() === address?.toLowerCase(),
-        );
-        setAlreadyApproved(alreadySigned);
+        if (role == "Mentor" && parsed.approvalCount > 0) {
+          setAlreadyApproved(true);
+        } else if (role == "HOD" && parsed.approvalCount > 1) {
+          setAlreadyApproved(true);
+        } else if (role == "Dean" && parsed.approvalCount > 2) {
+          setAlreadyApproved(true);
+        } else if (role == "VC" && parsed.approvalCount > 3) {
+          setAlreadyApproved(true);
+        }
+        // Fetch department balance for HOD
+        if (role === "HOD") {
+          const balance = await budgetContract.getDepartmentBalance(
+            parsed.department,
+          );
+          setDepartmentBalance(balance);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to fetch event");
       } finally {
@@ -88,13 +101,23 @@ export default function ApproveEventPage() {
     if (address) {
       fetchEventDetails();
     }
-  }, [address, id]);
+  }, [address, id, role]);
 
   const handleApprove = async () => {
     try {
       setApproving(true);
-      const contract = await getContract();
-      const tx = await contract.approveEvent(Number(id));
+      const [approvalContract, budgetContract] = await getContract();
+
+      if (role === "HOD") {
+        // If role is HOD, approve the event and subtract from department's budget
+        const tx = await budgetContract.approveEvent(
+          event!.department,
+          event!.requestedAmount,
+        );
+        await tx.wait();
+      }
+
+      const tx = await approvalContract.approveEvent(Number(id));
       await tx.wait();
       router.push("/");
     } catch (err: any) {
@@ -109,8 +132,9 @@ export default function ApproveEventPage() {
     !event.isFinalApproved &&
     !alreadyApproved &&
     ((role === "Mentor" && event.approvalCount === 0) ||
-      (role === "Dean" && event.approvalCount === 1) ||
-      (role === "VC" && event.approvalCount === 2));
+      (role === "HOD" && event.approvalCount === 1) ||
+      (role === "Dean" && event.approvalCount === 2) ||
+      (role === "VC" && event.approvalCount === 3));
 
   if (loading) {
     return (
@@ -221,146 +245,20 @@ export default function ApproveEventPage() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center bg-gray-50 p-3 rounded-md">
-                <ThumbsUp className="h-4 w-4 text-gray-500 mr-3" />
-                <div>
-                  <p className="text-xs text-gray-500">Approval Status</p>
-                  <div className="flex items-center">
-                    <div className="flex space-x-1">
-                      {[...Array(3)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`h-2 w-6 rounded-sm ${i < event.approvalCount ? "bg-purple-600" : "bg-gray-200"}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm font-medium">
-                      {event.approvalCount}/3
-                    </span>
+              {role === "HOD" && (
+                <div className="flex items-center bg-gray-50 p-3 rounded-md">
+                  <CreditCard className="h-4 w-4 text-gray-500 mr-3" />
+                  <div>
+                    <p className="text-xs text-gray-500">
+                      Remaining Budget for Department
+                    </p>
+                    <p className="font-medium">
+                      ₹{departmentBalance.toLocaleString()}
+                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-md p-4 mb-4">
-              <h3 className="text-sm font-medium mb-3 flex items-center">
-                <User className="h-4 w-4 mr-2 text-gray-500" />
-                Approval Chain
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
-                      event.approvalCount > 0
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "bg-gray-100 text-gray-400 border border-gray-200"
-                    }`}
-                  >
-                    1
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Mentor</p>
-                    {event.approvals &&
-                      event.approvals.length > 0 &&
-                      event.approvals[0] && (
-                        <p className="text-xs text-gray-500">
-                          {event.approvals[0].signer.substring(0, 6)}...
-                          {event.approvals[0].signer.substring(
-                            event.approvals[0].signer.length - 4,
-                          )}
-                        </p>
-                      )}
-                  </div>
-                  {event.approvalCount > 0 && (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  )}
-                </div>
-
-                <div className="flex items-center">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
-                      event.approvalCount > 1
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "bg-gray-100 text-gray-400 border border-gray-200"
-                    }`}
-                  >
-                    2
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Dean</p>
-                    {event.approvals &&
-                      event.approvals.length > 1 &&
-                      event.approvals[1] && (
-                        <p className="text-xs text-gray-500">
-                          {event.approvals[1].signer.substring(0, 6)}...
-                          {event.approvals[1].signer.substring(
-                            event.approvals[1].signer.length - 4,
-                          )}
-                        </p>
-                      )}
-                  </div>
-                  {event.approvalCount > 1 && (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  )}
-                </div>
-
-                <div className="flex items-center">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center mr-3 ${
-                      event.approvalCount > 2
-                        ? "bg-green-100 text-green-700 border border-green-200"
-                        : "bg-gray-100 text-gray-400 border border-gray-200"
-                    }`}
-                  >
-                    3
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Vice Chancellor</p>
-                    {event.approvals &&
-                      event.approvals.length > 2 &&
-                      event.approvals[2] && (
-                        <p className="text-xs text-gray-500">
-                          {event.approvals[2].signer.substring(0, 6)}...
-                          {event.approvals[2].signer.substring(
-                            event.approvals[2].signer.length - 4,
-                          )}
-                        </p>
-                      )}
-                  </div>
-                  {event.approvalCount > 2 && (
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {alreadyApproved && (
-              <Alert className="bg-green-50 text-green-800 border-green-200">
-                <CheckCircle className="h-4 w-4" />
-                <AlertDescription>
-                  You've already approved this event
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {!event.isFinalApproved &&
-              !canApprove &&
-              role !== "Club" &&
-              !alreadyApproved && (
-                <Alert className="bg-amber-50 text-amber-800 border-amber-200">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    You are not the next approver in the sequence. The current
-                    approval stage requires{" "}
-                    {event.approvalCount === 0
-                      ? "Mentor"
-                      : event.approvalCount === 1
-                        ? "Dean"
-                        : "Vice Chancellor"}{" "}
-                    approval.
-                  </AlertDescription>
-                </Alert>
               )}
+            </div>
           </CardContent>
 
           {canApprove && (

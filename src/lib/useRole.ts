@@ -14,8 +14,8 @@ export function useRole(address: string | null) {
 
     async function fetchRole() {
       try {
-        const contract = await getContract();
-        const r = await contract.getRole(address);
+        const [approvalContract, budgetContract] = await getContract();
+        const r = await approvalContract.getRole(address);
         setRole(r);
       } catch (err) {
         console.error("Error getting role:", err);

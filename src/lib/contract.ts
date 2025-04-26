@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
-import contractABI from "./abi.json"; // Your ABI (with getRole added)
-
-const CONTRACT_ADDRESS = "0xe98a02C8acC482090a8649BfEAEA0997bFDe2679"; // updated after redeploy
+import approvalContractABI from "./approval-abi.json";
+import budgetContractABI from "./budget-abi.json";
+const APPROVAL_CONTRACT_ADDRESS = "0x8bEd325124B0e9Cb6BD2F423855a1A1B56534667"; // updated after redeploy
+const BUDGET_CONTRACT_ADDRESS = "0x94e55a1085B1164941AC34Aa419Da71e55dD371d";
 
 export async function getContract() {
   if (!window.ethereum) throw new Error("MetaMask not found");
@@ -11,5 +12,8 @@ export async function getContract() {
   const provider = new ethers.BrowserProvider(window.ethereum);
   const signer = await provider.getSigner();
 
-  return new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
+  return [
+    new ethers.Contract(APPROVAL_CONTRACT_ADDRESS, approvalContractABI, signer),
+    new ethers.Contract(BUDGET_CONTRACT_ADDRESS, budgetContractABI, signer),
+  ];
 }
